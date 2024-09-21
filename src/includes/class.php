@@ -169,23 +169,30 @@ class ksso_roles {
     public function user_add_rolemapping($userid, $user_jwt_token)
     {
         $this->write_log('ksso_roles::user_add_rolemapping() - ' . $userid . ' - ' . print_r($user_jwt_token, true));
-        $userroles = $user_jwt_token->realm_access->roles;
-        $size = count($userroles);
+        $userroles_kc = $user_jwt_token->realm_access->roles;
+        $size = count($userroles_kc);
 
         if (sizeof($this->roles) == 0) 
         {
             return;
         }
 
+        $user = new WP_User($userid);
+        foreach ($user->roles as $role) 
+        {
+            $user->remove_role($role);
+        }
+
         for ($i = 0; $i < $size; $i++) 
         {
-            $role = $userroles[$i];
+            $role = $userroles_kc[$i];
             if (array_key_exists($role, $this->roles)) 
             {
                 $wp_role = $this->roles[$role];
                 $user = new WP_User($userid);
                 $user->set_role($wp_role);
             }
+
         }
     }
 
