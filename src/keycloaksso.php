@@ -24,13 +24,13 @@
         $charset_collate = $wpdb->get_charset_collate();
 
         $sql = "CREATE TABLE $table_name (
-            id TINYINT(1) NOT NULL,
-            serverurl varchar(255) NOT NULL,
-            realm varchar(255) NOT NULL,
-            clientid varchar(255) NOT NULL,
-            clientsecret text NOT NULL,
-            PRIMARY KEY  (id)
-        ) $charset_collate;";
+                id TINYINT(1) NOT NULL DEFAULT 1,
+                serverurl varchar(255) NOT NULL,
+                realm varchar(255) NOT NULL,
+                clientid varchar(255) NOT NULL,
+                clientsecret text NOT NULL,
+                PRIMARY KEY  (id)
+            ) $charset_collate";
 
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
         dbDelta($sql);
@@ -95,7 +95,7 @@ function ksso_handle_sso_login()
 
             if ($iss !== $kcdata->get_serverurl() . '/realms/' . $kcdata->get_realm())
             {
-                throw new Exception('Issuer does not match.');
+                throw new Exception('Issuer does not match.' . $iss . ' - ' . $kcdata->get_serverurl() . '/realms/' .  $kcdata->get_realm());
             }
 
             $access_token = ksso_request_jwt($code, $kcdata->get_tokenendpoint(), $kcdata->get_clientid(), $kcdata->get_clientsecret());
@@ -119,6 +119,9 @@ function ksso_handle_sso_login()
     }
 }
 
+if (is_admin()) {
+    require_once plugin_dir_path(__FILE__) . 'admin/admin-ui.php';
+}
 
 register_activation_hook(__FILE__, 'ksso_deploy_plugin');
 add_action('template_redirect', 'ksso_handle_sso_login');
