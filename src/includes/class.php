@@ -10,13 +10,22 @@ class ksso_data {
     private $tokenendpoint;
     private $accountservice;
 
-    public function __construct() 
+    public function __construct($serverurl = null, $realm = null, $clientid = null, $clientsecret = null) 
     {
+        if ($serverurl !== null && $realm !== null && $clientid !== null && $clientsecret !== null) {
+            $this->serverurl = sanitize_text_field($serverurl);
+            $this->realm = sanitize_text_field($realm);
+            $this->clientid = sanitize_text_field($clientid);
+            $this->clientsecret = sanitize_text_field($clientsecret);
+            $this->creat_db_entry();
+        }
+    
         $this->load_data_from_db();
         $this->build_login_url();
         $this->build_logout_url();
         $this->get_keycloak_data();
     }
+    
 
     public function get_serverurl() 
     {
@@ -61,6 +70,23 @@ class ksso_data {
     public function get_accountservice() 
     {
         return $this->accountservice;
+    }
+
+    private function creat_db_entry()
+    {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'ksso_roles';
+
+        if(empty($this->serverurl) || empty($this->realm) || empty($this->clientid) || empty($this->clientsecret)) 
+        {
+            wp_die('A critical error has occurred. Please inform the server administrator and report this error: Server URL, Realm, ClientID or ClientSecret is not set.');
+        }
+
+        $wpdb->insert($table_name, array('serverurl' => $this->serverurl, 'realm' => $this->realm, 'clientid' => $this->clientid, 'clientsecret' => $this->clientsecret));
+        $this->load_data_from_db();
+        $this->build_login_url();
+        $this->build_logout_url();
+        $this->get_keycloak_data();
     }
 
     private function load_data_from_db() 
